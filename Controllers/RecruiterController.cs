@@ -244,4 +244,102 @@ public class RecruiterController : Controller
             Cv = CvMapper.TryParse(app.CvSnapshot) ?? new CvData()
         });
     }
+    // ---------- Interviews ----------
+    [HttpGet]
+    public async Task<IActionResult> Interviews()
+    {
+        var rows = await _db.Applications.AsNoTracking()
+            .Where(a => a.Job.RecruiterId == Uid &&
+                        (a.Status == ApplicationStatus.Shortlisted || a.Interview != null))
+            .OrderByDescending(a => a.AppliedDate)
+            .Select(a => new InterviewRow
+            {
+                AppId = a.Id,
+                ApplicantName = a.Applicant.Name,
+                Email = a.Applicant.Email,
+                Phone = a.Applicant.Phone,
+                JobTitle = a.Job.Title,
+                Interview = a.Interview
+            })
+            .ToListAsync();
+        return View(rows);
+    }
+
+    [HttpGet]
+    public async Task<IActionResult> Schedule(int id) // id = application id
+    {
+        var a = await _db.Applications.AsNoTracking()
+            .Include(x => x.Applicant).Include(x => x.Job).Include(x => x.Interview)
+            .FirstOrDefaultAsync(x => x.Id == id && x.Job.RecruiterId == Uid);
+        if (a == null) return NotFound();
+
+        return View(new InterviewFormVm
+        {
+            ApplicationId = a.Id,
+            ApplicantName = a.Applicant.Name,
+            JobTitle = a.Job.Title,
+            ScheduledAt = a.Interview?.ScheduledAt,
+            MeetLink = a.Interview?.MeetLink ?? "",
+            Note = a.Interview?.Note
+        });
+    }
+
+    [HttpPost]
+    public async Task<IActionResult> Schedule(InterviewFormVm vm)
+    {
+        var a = await _db.Applications.Include(x => x.Interview)
+            .FirstOrDefaultAsync(x => x.Id == vm.ApplicationId && x.Job.RecruiterId == Uid);
+        if (a == null) return NotFound();
+
+        if (!Uri.TryCreate(vm.MeetLink?.Trim(), UriKind.Absolute, out var uri) || uri.Scheme != Uri.UriSchemeHttps)
+            ModelState.AddModelError(nameof(vm.MeetLink), "https:// diye shuru hoa valid link dien.");
+        if (vm.ScheduledAt != null && vm.ScheduledAt < DateTime.Now && a.Interview == null)
+            ModelState.AddModelError(nameof(vm.ScheduledAt), "Future er somoy dien.");
+        if (!ModelState.IsValid) return View(vm);
+
+        if (a.Interview == null)
+        {
+            a.Interview = new Interview { ApplicationId = a.Id };
+            _db.Interviews.Add(a.Interview);
+        }
+        a.Interview.ScheduledAt = vm.ScheduledAt!.Value;
+        a.Interview.MeetLink = vm.MeetLink.Trim();
+        a.Interview.Note = (vm.Note ?? "").Trim();
+
+        await _db.SaveChangesAsync();
+        TempData["Msg"] = "Interview scheduled. Applicant dekhte parbe.";
+        return RedirectToAction(nameof(Interviews));
+    }
+
+    [HttpPost]
+    public async Task<IActionResult> SaveResult(InterviewResultVm vm)
+    {
+        var iv = await _db.Interviews
+            .FirstOrDefaultAsync(i => i.Id == vm.InterviewId && i.Application.Job.RecruiterId == Uid);
+        if (iv == null) return NotFound();
+
+        if (!ModelState.IsValid)
+        {
+            TempData["Msg"] = "Feedback likhte hobe.";
+            return RedirectToAction(nameof(Interviews));
+        }
+
+        iv.Result = vm.Result;
+        iv.Feedback = vm.Feedback.Trim();
+        await _db.SaveChangesAsync();
+        TempData["Msg"] = "Result o feedback save hoyeche.";
+        return RedirectToAction(nameof(Interviews));
+    }
+
+    [HttpPost]
+    public async Task<IActionResult> CancelInterview(int id) // interview id
+    {
+        var iv = await _db.Interviews
+            .FirstOrDefaultAsync(i => i.Id == id && i.Application.Job.RecruiterId == Uid);
+        if (iv == null) return NotFound();
+        _db.Interviews.Remove(iv);
+        await _db.SaveChangesAsync();
+        TempData["Msg"] = "Interview cancel kora hoyeche.";
+        return RedirectToAction(nameof(Interviews));
+    }
 }

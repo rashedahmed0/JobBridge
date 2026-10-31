@@ -256,6 +256,51 @@ namespace KormoKhoj.Migrations
                     b.ToTable("CvProjects");
                 });
 
+            modelBuilder.Entity("KormoKhoj.Models.Interview", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<int>("ApplicationId")
+                        .HasColumnType("int");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("Feedback")
+                        .IsRequired()
+                        .HasMaxLength(2000)
+                        .HasColumnType("nvarchar(2000)");
+
+                    b.Property<string>("MeetLink")
+                        .IsRequired()
+                        .HasMaxLength(500)
+                        .HasColumnType("nvarchar(500)");
+
+                    b.Property<string>("Note")
+                        .IsRequired()
+                        .HasMaxLength(1000)
+                        .HasColumnType("nvarchar(1000)");
+
+                    b.Property<string>("Result")
+                        .IsRequired()
+                        .HasMaxLength(20)
+                        .HasColumnType("nvarchar(20)");
+
+                    b.Property<DateTime>("ScheduledAt")
+                        .HasColumnType("datetime2");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("ApplicationId")
+                        .IsUnique();
+
+                    b.ToTable("Interviews");
+                });
+
             modelBuilder.Entity("KormoKhoj.Models.Job", b =>
                 {
                     b.Property<int>("Id")
@@ -402,6 +447,17 @@ namespace KormoKhoj.Migrations
                     b.Navigation("Cv");
                 });
 
+            modelBuilder.Entity("KormoKhoj.Models.Interview", b =>
+                {
+                    b.HasOne("KormoKhoj.Models.JobApplication", "Application")
+                        .WithOne("Interview")
+                        .HasForeignKey("KormoKhoj.Models.Interview", "ApplicationId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Application");
+                });
+
             modelBuilder.Entity("KormoKhoj.Models.Job", b =>
                 {
                     b.HasOne("KormoKhoj.Models.AppUser", "Recruiter")
@@ -453,6 +509,11 @@ namespace KormoKhoj.Migrations
             modelBuilder.Entity("KormoKhoj.Models.Job", b =>
                 {
                     b.Navigation("Applications");
+                });
+
+            modelBuilder.Entity("KormoKhoj.Models.JobApplication", b =>
+                {
+                    b.Navigation("Interview");
                 });
 #pragma warning restore 612, 618
         }

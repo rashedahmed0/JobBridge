@@ -1,0 +1,31 @@
+@using KormoKhoj.ViewModels
+@model InterviewFormVm
+@{
+    ViewData["Title"] = "Schedule Interview";
+    ViewData["Tab"] = "interviews";
+}
+<partial name="_RecruiterTabs" />
+
+<div class="card">
+    <h3>@Model.ApplicantName <span class="mut">· @Model.JobTitle</span></h3>
+    <form asp-action="Schedule" method="post">
+        <input type="hidden" asp-for="ApplicationId" />
+        <input type="hidden" asp-for="ApplicantName" />
+        <input type="hidden" asp-for="JobTitle" />
+
+        <label>Date &amp; Time</label>
+        <input asp-for="ScheduledAt" type="datetime-local" />
+        <span asp-validation-for="ScheduledAt" class="bad"></span>
+
+        <label>Google Meet link</label>
+        <input asp-for="MeetLink" placeholder="https://meet.google.com/abc-defg-hij" />
+        <span asp-validation-for="MeetLink" class="bad"></span>
+        <small class="mut">Link banate <a href="https://meet.new" target="_blank" rel="noopener">meet.new</a> e jan.</small>
+
+        <label>Note (optional)</label>
+        <textarea asp-for="Note" rows="3"></textarea>
+
+        <button class="btn" type="submit">Save</button>
+        <a class="btn alt" asp-action="Interviews">Back</a>
+    </form>
+</div>

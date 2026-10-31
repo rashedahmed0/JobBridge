@@ -1,0 +1,64 @@
+@using KormoKhoj.Models
+@using KormoKhoj.ViewModels
+@model List<InterviewRow>
+@{
+    ViewData["Title"] = "Interviews";
+    ViewData["Tab"] = "interviews";
+}
+<partial name="_RecruiterTabs" />
+
+@if (Model.Count == 0)
+{
+    <div class="card">Kono shortlisted applicant nai. Applicants page theke shortlist korun.</div>
+}
+@foreach (var r in Model)
+{
+    var iv = r.Interview;
+    <div class="card">
+        <div class="row sp">
+            <div>
+                <h3>@r.ApplicantName <span class="mut">· @r.JobTitle</span></h3>
+                <span class="mut">@r.Email · @r.Phone</span>
+                @if (iv != null)
+                {
+                    <p>
+                        <b>@iv.ScheduledAt.ToString("dd MMM yyyy, hh:mm tt")</b>
+                        · <a href="@iv.MeetLink" target="_blank" rel="noopener noreferrer">Meet link</a>
+                        <span class="tag">@iv.Result</span>
+                    </p>
+                }
+            </div>
+            <div class="row">
+                <a class="btn sm" asp-action="Schedule" asp-route-id="@r.AppId">
+                    @(iv == null ? "Schedule Interview" : "Reschedule")
+                </a>
+                @if (iv != null)
+                {
+                    <form asp-action="CancelInterview" asp-route-id="@iv.Id" method="post" class="inl"
+                          data-confirm="Interview cancel korben?">
+                        <button class="btn bad sm" type="submit">Cancel</button>
+                    </form>
+                }
+            </div>
+        </div>
+
+        @if (iv != null)
+        {
+            <details>
+                <summary>Result &amp; Feedback</summary>
+                <form asp-action="SaveResult" method="post">
+                    <input type="hidden" name="InterviewId" value="@iv.Id" />
+                    <select name="Result">
+                        @foreach (var v in Enum.GetValues<InterviewResult>())
+                        {
+                            <option value="@v" selected="@(iv.Result == v)">@v</option>
+                        }
+                    </select>
+                    <textarea name="Feedback" rows="4" maxlength="2000"
+                              placeholder="Applicant er jonno feedback">@iv.Feedback</textarea>
+                    <button class="btn sm" type="submit">Save</button>
+                </form>
+            </details>
+        }
+    </div>
+}

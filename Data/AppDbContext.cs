@@ -14,6 +14,7 @@ public class AppDbContext : DbContext
     public DbSet<CvEducation> CvEducations => Set<CvEducation>();
     public DbSet<CvExperience> CvExperiences => Set<CvExperience>();
     public DbSet<CvProject> CvProjects => Set<CvProject>();
+    public DbSet<Interview> Interviews => Set<Interview>();
 
     protected override void OnModelCreating(ModelBuilder b)
     {
@@ -49,6 +50,16 @@ public class AppDbContext : DbContext
                 .OnDelete(DeleteBehavior.NoAction);
             e.Property(a => a.Status).HasConversion<string>().HasMaxLength(20);
             e.HasIndex(a => new { a.JobId, a.UserId }).IsUnique();
+        });
+
+        b.Entity<Interview>(e =>
+        {
+            e.HasOne(i => i.Application)
+                .WithOne(a => a.Interview)
+                .HasForeignKey<Interview>(i => i.ApplicationId)
+                .OnDelete(DeleteBehavior.Cascade);
+            e.HasIndex(i => i.ApplicationId).IsUnique();
+            e.Property(i => i.Result).HasConversion<string>().HasMaxLength(20);
         });
 
         b.Entity<Cv>(e =>

@@ -24,4 +24,5 @@ public class JobApplication
 
     /// <summary>JSON copy of the applicant's CV at the time of applying.</summary>
     public string CvSnapshot { get; set; } = "{}";
+    public Interview? Interview { get; set; }
 }

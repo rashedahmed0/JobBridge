@@ -25,6 +25,10 @@
             @if (signedIn)
             {
                 <a asp-controller="Dashboard" asp-action="Index">Dashboard</a>
+                @if (User.IsInRole("Applicant"))
+                {
+                    <a asp-controller="MyInterviews" asp-action="Index">My Interviews</a>
+                }
                 <form asp-controller="Account" asp-action="Logout" method="post" class="inl">
                     <button type="submit" class="lnk">Logout (@firstName)</button>
                 </form>
