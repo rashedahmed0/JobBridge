@@ -1,0 +1,14 @@
+@model JobCardVm
+@{ var j = Model.Job; }
+<div class="card">
+    <h3>@j.Title</h3>
+    <div>@j.Company</div>
+    <div>
+        <span class="tag">@j.Location</span><span class="tag">@j.Type</span><span class="tag">@j.Salary</span>
+    </div>
+    <p class="mut">Posted @j.PostedDate.ToString("yyyy-MM-dd")</p>
+    <div class="row">
+        <a class="btn alt sm" asp-controller="Jobs" asp-action="Details" asp-route-id="@j.Id">Details</a>
+        <partial name="_ApplyButton" model="Model" />
+    </div>
+</div>

@@ -1,0 +1,58 @@
+@using Microsoft.AspNetCore.Antiforgery
+@inject IAntiforgery Antiforgery
+@{
+    var token = Antiforgery.GetAndStoreTokens(Context).RequestToken;
+    var signedIn = User.Identity?.IsAuthenticated == true;
+    var firstName = (User.Identity?.Name ?? "").Split(' ', StringSplitOptions.RemoveEmptyEntries).FirstOrDefault() ?? "";
+}
+<!doctype html>
+<html lang="bn">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+    <meta name="csrf" content="@token" />
+    <title>@ViewData["Title"] – কর্মখোঁজ</title>
+    <link href="https://fonts.googleapis.com/css2?family=Hind+Siliguri:wght@400;500;600;700&display=swap" rel="stylesheet" />
+    <link rel="stylesheet" href="~/css/site.css" asp-append-version="true" />
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+</head>
+<body>
+    <header>
+        <div class="nav">
+            <a class="logo" asp-controller="Jobs" asp-action="Index">কর্মখোঁজ</a>
+            <a asp-controller="Jobs" asp-action="Index">Jobs</a>
+            <a asp-controller="Cv" asp-action="Builder">CV Maker</a>
+            @if (signedIn)
+            {
+                <a asp-controller="Dashboard" asp-action="Index">Dashboard</a>
+                <form asp-controller="Account" asp-action="Logout" method="post" class="inl">
+                    <button type="submit" class="lnk">Logout (@firstName)</button>
+                </form>
+            }
+            else
+            {
+                <a asp-controller="Account" asp-action="Login">Login</a>
+                <a asp-controller="Account" asp-action="Register">Register</a>
+            }
+        </div>
+    </header>
+
+    <main>
+        @RenderBody()
+    </main>
+
+    <div id="toast"></div>
+    <div id="modal"></div>
+
+    <script src="~/js/site.js" asp-append-version="true"></script>
+    @if (TempData["ClearGuest"] != null)
+    {
+        <script>try { localStorage.removeItem('jh_guest'); } catch (e) { }</script>
+    }
+    @if (TempData["Msg"] is string msg)
+    {
+        <script>toast(@Json.Serialize(msg));</script>
+    }
+    @await RenderSectionAsync("Scripts", required: false)
+</body>
+</html>

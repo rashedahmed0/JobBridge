@@ -1,0 +1,644 @@
+@model ApplicantsVm
+
+@{
+    ViewData["Title"] = "Applicants";
+    ViewData["Tab"] = "jobs";
+
+    var gridData = Model.Rows.Select(r => new
+    {
+        appId = r.AppId,
+        name = r.Name,
+        phone = r.Phone,
+        email = r.Email,
+        address = r.Address,
+        education = r.Education,
+        department = r.Department,
+        cgpa = r.Cgpa,
+        year = r.Year,
+        skills = r.Skills,
+        status = r.Status.ToString(),
+        statusUrl = Url.Action("UpdateStatus", "Recruiter", new { id = r.AppId }),
+        cvUrl = Url.Action("ApplicantCv", "Recruiter", new { id = r.AppId })
+    }).ToList();
+
+    var statusNames = Enum.GetNames<ApplicationStatus>();
+}
+
+<partial name="_RecruiterTabs" />
+
+<style>
+    #grid {
+        width: 100%;
+        height: 560px;
+    }
+
+    .grid-bar {
+        display: flex;
+        gap: 10px;
+        align-items: center;
+        margin: 0 0 10px;
+        flex-wrap: wrap;
+    }
+
+        .grid-bar label {
+            font-weight: 600;
+        }
+
+        .grid-bar select {
+            width: 169px;
+            padding: 9px 12px;
+            border: 1px solid #ccc;
+            border-radius: 6px;
+            background: #fff;
+            cursor: pointer;
+        }
+
+    #grid select.st {
+        width: 100%;
+        padding: 3px;
+    }
+
+    #grid .btn {
+        line-height: 1;
+    }
+
+    #cvOverlay {
+        display: none;
+        position: fixed;
+        inset: 0;
+        background: rgba(0, 0, 0, .5);
+        z-index: 9999;
+        align-items: center;
+        justify-content: center;
+    }
+
+        #cvOverlay.open {
+            display: flex;
+        }
+
+    #cvBox {
+        background: #fff;
+        width: min(860px, 94vw);
+        max-height: 90vh;
+        border-radius: 10px;
+        display: flex;
+        flex-direction: column;
+        overflow: hidden;
+    }
+
+    #cvHead {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 12px 16px;
+        border-bottom: 1px solid #e5e5e5;
+    }
+
+        #cvHead button {
+            border: 0;
+            background: none;
+            font-size: 24px;
+            cursor: pointer;
+            line-height: 1;
+        }
+
+    #cvBody {
+        padding: 16px;
+        overflow: auto;
+    }
+</style>
+
+<a class="btn alt sm" asp-action="Index">← Back</a>
+
+<h3 style="margin-top:12px">
+    Applicants for @Model.Job.Title
+</h3>
+
+@if (Model.Rows.Count == 0)
+{
+    <div class="card">No applicants yet.</div>
+}
+else
+{
+    @* Anti-forgery token for POST requests *@
+    @Html.AntiForgeryToken()
+
+    <div class="grid-bar">
+        <label for="statusFilter">Filter by Status:</label>
+
+        <select id="statusFilter">
+            <option value="">All Statuses</option>
+        </select>
+    </div>
+
+    <div id="grid" class="ag-theme-quartz"></div>
+
+    <div id="cvOverlay">
+        <div id="cvBox">
+            <div id="cvHead">
+                <strong>Profile &amp; CV</strong>
+                <button type="button" id="cvClose">&times;</button>
+            </div>
+
+            <div id="cvBody"></div>
+         
+        </div>
+    </div>
+
+
+    <script src="https://cdn.jsdelivr.net/npm/ag-grid-community@31.3.4/dist/ag-grid-community.min.js"></script>
+
+    <script>
+        (function () {
+            var statuses = @Html.Raw(
+                            System.Text.Json.JsonSerializer.Serialize(statusNames)
+                            );
+
+            var rows = @Html.Raw(
+                            System.Text.Json.JsonSerializer.Serialize(gridData)
+                            );
+
+            var statusFilter = document.getElementById("statusFilter");
+            var gridDiv = document.getElementById("grid");
+
+            // Anti-forgery token
+            var tokenInput = document.querySelector(
+                'input[name="__RequestVerificationToken"]'
+            );
+
+            var antiForgeryToken = tokenInput
+                ? tokenInput.value
+                : "";
+
+            function esc(s) {
+                return String(s == null ? "" : s).replace(/[&<>"']/g, function (c) {
+                    return {
+                        "&": "&amp;",
+                        "<": "&lt;",
+                        ">": "&gt;",
+                        '"': "&quot;",
+                        "'": "&#39;"
+                    }[c];
+                });
+            }
+
+            // Populate status dropdown
+            statuses.forEach(function (status) {
+                var option = document.createElement("option");
+                option.value = status;
+                option.textContent = status;
+                statusFilter.appendChild(option);
+            });
+
+            // Custom filter: Contains, Range, Outside Range
+            class ThreeOptionFilter {
+                init(params) {
+                    this.params = params;
+                    this.filterChangedCallback = params.filterChangedCallback;
+
+                    this.gui = document.createElement("div");
+
+                    this.gui.innerHTML =
+                        '<div style="padding:10px;min-width:220px;">' +
+                        '  <select class="filter-type" style="width:100%;padding:8px;margin-bottom:10px;">' +
+                        '    <option value="contains">Contains</option>' +
+                        '    <option value="range">Range</option>' +
+                        '    <option value="outsideRange">Outside Range</option>' +
+                        '  </select>' +
+                        '  <input class="filter-value" type="text" placeholder="Search value" ' +
+                        '         style="width:100%;box-sizing:border-box;padding:8px;margin-bottom:8px;" />' +
+                        '  <input class="filter-value-to" type="number" placeholder="Maximum value" ' +
+                        '         style="display:none;width:100%;box-sizing:border-box;padding:8px;" />' +
+                        '</div>';
+
+                    this.typeInput = this.gui.querySelector(".filter-type");
+                    this.minInput = this.gui.querySelector(".filter-value");
+                    this.maxInput = this.gui.querySelector(".filter-value-to");
+
+                    var self = this;
+
+                    this.typeInput.addEventListener("change", function () {
+                        self.updateInputs();
+                        self.filterChangedCallback();
+                    });
+
+                    this.minInput.addEventListener("input", function () {
+                        self.filterChangedCallback();
+                    });
+
+                    this.maxInput.addEventListener("input", function () {
+                        self.filterChangedCallback();
+                    });
+                }
+
+                updateInputs() {
+                    var isContains = this.typeInput.value === "contains";
+
+                    this.minInput.type = isContains ? "text" : "number";
+
+                    this.minInput.placeholder = isContains
+                        ? "Search value"
+                        : "Minimum value";
+
+                    this.maxInput.style.display = isContains ? "none" : "block";
+
+                    if (isContains) {
+                        this.maxInput.value = "";
+                    } else if (isNaN(Number(this.minInput.value))) {
+                        this.minInput.value = "";
+                    }
+                }
+
+                getValues() {
+                    return {
+                        type: this.typeInput.value,
+                        min: this.minInput.value,
+                        max: this.maxInput.value
+                    };
+                }
+
+                getGui() {
+                    return this.gui;
+                }
+
+                isFilterActive() {
+                    var v = this.getValues();
+
+                    if (v.type === "contains") {
+                        return v.min.trim() !== "";
+                    }
+
+                    if (v.min === "" || v.max === "") {
+                        return false;
+                    }
+
+                    var min = Number(v.min);
+                    var max = Number(v.max);
+
+                    return Number.isFinite(min) &&
+                        Number.isFinite(max) &&
+                        min <= max;
+                }
+
+                doesFilterPass(params) {
+                    var v = this.getValues();
+                    var cellValue = this.params.getValue(params.node);
+
+                    if (
+                        cellValue === null ||
+                        cellValue === undefined ||
+                        cellValue === ""
+                    ) {
+                        return false;
+                    }
+
+                    if (v.type === "contains") {
+                        return String(cellValue)
+                            .toLowerCase()
+                            .includes(v.min.trim().toLowerCase());
+                    }
+
+                    var number = Number(cellValue);
+                    var min = Number(v.min);
+                    var max = Number(v.max);
+
+                    if (!Number.isFinite(number)) {
+                        return false;
+                    }
+
+                    if (v.type === "range") {
+                        return number >= min && number <= max;
+                    }
+
+                    return number < min || number > max;
+                }
+
+                getModel() {
+                    if (!this.isFilterActive()) {
+                        return null;
+                    }
+
+                    var v = this.getValues();
+
+                    return {
+                        filterType: v.type,
+                        filterValue: v.min,
+                        filterValueTo: v.max
+                    };
+                }
+
+                setModel(model) {
+                    this.typeInput.value =
+                        (model && model.filterType) || "contains";
+
+                    this.minInput.value =
+                        (model && model.filterValue) || "";
+
+                    this.maxInput.value =
+                        (model && model.filterValueTo) || "";
+
+                    this.updateInputs();
+                }
+            }
+
+            var columnDefs = [
+                {
+                    field: "name",
+                    headerName: "Name",
+                    minWidth: 150,
+                    filter: ThreeOptionFilter
+                },
+                {
+                    field: "phone",
+                    headerName: "Number",
+                    minWidth: 130,
+                    filter: ThreeOptionFilter
+                },
+                {
+                    field: "email",
+                    headerName: "Email",
+                    minWidth: 200,
+                    filter: ThreeOptionFilter
+                },
+                {
+                    field: "address",
+                    headerName: "Address",
+                    minWidth: 170,
+                    filter: ThreeOptionFilter
+                },
+                {
+                    field: "education",
+                    headerName: "Education",
+                    minWidth: 140,
+                    filter: ThreeOptionFilter
+                },
+                {
+                    field: "department",
+                    headerName: "Department / Group",
+                    minWidth: 190,
+                    filter: ThreeOptionFilter
+                },
+                {
+                    field: "cgpa",
+                    headerName: "CGPA/GPA",
+                    minWidth: 110,
+                    filter: ThreeOptionFilter
+                },
+                {
+                    field: "year",
+                    headerName: "Year",
+                    minWidth: 90,
+                    filter: ThreeOptionFilter
+                },
+                {
+                    field: "skills",
+                    headerName: "Skill",
+                    minWidth: 180,
+                    filter: ThreeOptionFilter
+                },
+                {
+                    field: "status",
+                    headerName: "Status",
+                    minWidth: 160,
+                    filter: ThreeOptionFilter,
+
+                    cellRenderer: function (p) {
+                        var html = '<select class="st">';
+
+                        statuses.forEach(function (s) {
+                            html += '<option value="' + esc(s) + '"' +
+                                (s === p.value ? ' selected' : '') +
+                                '>' + esc(s) + '</option>';
+                        });
+
+                        return html + '</select>';
+                    }
+                },
+                {
+                    headerName: "CV",
+                    minWidth: 140,
+                    sortable: false,
+                    filter: false,
+                    resizable: false,
+
+                    cellRenderer: function () {
+                        return '<button class="btn sm" type="button" data-cv="1">' +
+                            'Profile &amp; CV</button>';
+                    }
+                }
+            ];
+
+            // Return rows matching the selected status
+            function getVisibleRows() {
+                var selectedStatus = statusFilter.value;
+
+                if (!selectedStatus) {
+                    return rows;
+                }
+
+                return rows.filter(function (row) {
+                    return row.status === selectedStatus;
+                });
+            }
+
+            var gridApi = agGrid.createGrid(gridDiv, {
+                columnDefs: columnDefs,
+                rowData: rows,
+
+                defaultColDef: {
+                    sortable: true,
+                    filter: true,
+                    resizable: true,
+                    flex: 1,
+                    floatingFilter: false
+                },
+
+                pagination: true,
+                paginationPageSize: 10,
+                paginationPageSizeSelector: [10, 25, 50],
+                multiSortKey: "ctrl",
+                suppressCellFocus: true,
+
+                getRowId: function (p) {
+                    return String(p.data.appId);
+                }
+            });
+
+            // Top status filter
+            statusFilter.addEventListener("change", function () {
+                gridApi.setGridOption("rowData", getVisibleRows());
+            });
+
+            // Status update
+            gridDiv.addEventListener("change", async function (e) {
+                var sel = e.target.closest("select.st");
+
+                if (!sel) {
+                    return;
+                }
+
+                var rowEl = sel.closest(".ag-row");
+
+                if (!rowEl) {
+                    return;
+                }
+
+                var node = gridApi.getRowNode(
+                    rowEl.getAttribute("row-id")
+                );
+
+                if (!node) {
+                    return;
+                }
+
+                var oldStatus = node.data.status;
+                var newStatus = sel.value;
+                var rowData = node.data;
+
+                // Prevent duplicate requests while saving
+                sel.disabled = true;
+
+                try {
+                    var requestBody = new URLSearchParams();
+                    requestBody.append("status", newStatus);
+
+                    if (antiForgeryToken) {
+                        requestBody.append(
+                            "__RequestVerificationToken",
+                            antiForgeryToken
+                        );
+                    }
+
+                    var res = await fetch(rowData.statusUrl, {
+                        method: "POST",
+                        credentials: "same-origin",
+                        headers: {
+                            "Content-Type":
+                                "application/x-www-form-urlencoded; charset=UTF-8"
+                        },
+                        body: requestBody.toString()
+                    });
+
+                    if (!res.ok) {
+                        var errorText = await res.text();
+
+                        console.error(
+                            "Status update failed:",
+                            res.status,
+                            res.statusText,
+                            errorText
+                        );
+
+                        throw new Error(
+                            "HTTP " + res.status + " - " +
+                            (res.statusText || "Request failed")
+                        );
+                    }
+
+                    // Update the original rows array
+                    rows.forEach(function (row) {
+                        if (
+                            String(row.appId) === String(rowData.appId)
+                        ) {
+                            row.status = newStatus;
+                        }
+                    });
+
+                    // Update the grid's row data
+                    var updatedRow = {
+                        ...rowData,
+                        status: newStatus
+                    };
+
+                    node.setData(updatedRow);
+
+                    // Reapply top status filter
+                    // If status no longer matches, remove the row
+                    // from the current filtered results.
+                    gridApi.setGridOption("rowData", getVisibleRows());
+
+                } catch (err) {
+                    console.error("Unable to update applicant status:", err);
+
+                    alert(
+                        "Status update failed.\n" +
+                        (err.message || "Please try again.")
+                    );
+
+                    // Restore the previous selection
+                    sel.value = oldStatus;
+
+                } finally {
+                    sel.disabled = false;
+                }
+            });
+
+            // CV modal
+            var overlay = document.getElementById("cvOverlay");
+            var body = document.getElementById("cvBody");
+
+            function closeCv() {
+                overlay.classList.remove("open");
+            }
+
+            document.getElementById("cvClose")
+                .addEventListener("click", closeCv);
+
+            overlay.addEventListener("click", function (e) {
+                if (e.target === overlay) {
+                    closeCv();
+                }
+            });
+
+            document.addEventListener("keydown", function (e) {
+                if (e.key === "Escape") {
+                    closeCv();
+                }
+            });
+
+            gridDiv.addEventListener("click", async function (e) {
+                var btn = e.target.closest("button[data-cv]");
+
+                if (!btn) {
+                    return;
+                }
+
+                e.stopPropagation();
+
+                var rowEl = btn.closest(".ag-row");
+
+                if (!rowEl) {
+                    return;
+                }
+
+                var node = gridApi.getRowNode(
+                    rowEl.getAttribute("row-id")
+                );
+
+                if (!node) {
+                    return;
+                }
+
+                body.textContent = "Loading...";
+                overlay.classList.add("open");
+
+                try {
+                    var res = await fetch(node.data.cvUrl, {
+                        credentials: "same-origin"
+                    });
+
+                    if (!res.ok) {
+                        throw new Error("HTTP " + res.status);
+                    }
+
+                    body.innerHTML = await res.text();
+
+                } catch (err) {
+                    console.error("CV loading failed:", err);
+                    body.textContent = "Could not load CV.";
+                }
+            });
+
+        })();
+    </script>
+}

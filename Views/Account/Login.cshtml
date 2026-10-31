@@ -1,0 +1,33 @@
+@model LoginVm
+@{ ViewData["Title"] = "Login"; }
+
+<div class="card" style="max-width:460px;margin:20px auto">
+    <h2>Login</h2>
+    <div class="tabs">
+        @foreach (var (key, label) in new[] { ("JobSeeker", "Job Seeker"), ("Recruiter", "Recruiter"), ("Admin", "Admin") })
+        {
+            <a class="tabbtn @(Model.Role == key ? "on" : "")" asp-action="Login"
+               asp-route-role="@key" asp-route-returnUrl="@Model.ReturnUrl">@label</a>
+        }
+    </div>
+
+    <form asp-action="Login" method="post">
+        <input type="hidden" asp-for="Role" />
+        <input type="hidden" asp-for="ReturnUrl" />
+        <div asp-validation-summary="ModelOnly" class="err"></div>
+
+        <label asp-for="Email">Email</label>
+        <input asp-for="Email" autocomplete="username" />
+        <span asp-validation-for="Email" class="err"></span>
+
+        <label asp-for="Password">Password</label>
+        <input asp-for="Password" autocomplete="current-password" />
+        <span asp-validation-for="Password" class="err"></span>
+
+        <br /><br />
+        <button class="btn" type="submit">Login</button>
+        <a asp-action="Register">New here? Register</a>
+    </form>
+
+    <p class="mut">Demo — Recruiter: recruiter@demo.com / demo123 · Admin: admin@karmo.com / admin123</p>
+</div>

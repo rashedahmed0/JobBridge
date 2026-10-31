@@ -1,0 +1,27 @@
+@model JobCardVm
+@if (User.IsInRole("JobSeeker"))
+{
+    if (!Model.Job.IsOpen)
+    {
+        <span class="tag">Closed</span>
+    }
+    else if (Model.Applied)
+    {
+        <span class="tag">Applied ✓</span>
+    }
+    else
+    {
+        <form asp-controller="Jobs" asp-action="Apply" asp-route-id="@Model.Job.Id" method="post" class="inl">
+            <button type="submit" class="btn sm">Apply Now</button>
+        </form>
+    }
+}
+else if (User.Identity?.IsAuthenticated == true)
+{
+    <span class="mut">Only job seekers can apply</span>
+}
+else
+{
+    <a class="btn sm" asp-controller="Account" asp-action="Login"
+       asp-route-returnUrl="@Url.Action("Details", "Jobs", new { id = Model.Job.Id })">Apply Now</a>
+}

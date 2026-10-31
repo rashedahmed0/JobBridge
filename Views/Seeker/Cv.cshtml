@@ -1,0 +1,22 @@
+@model CvData?
+@{
+    ViewData["Title"] = "My CV";
+    ViewData["Tab"] = "cv";
+}
+<partial name="_SeekerTabs" />
+
+@if (Model == null)
+{
+    <div class="card">
+        <p>You have no saved CV yet. Your saved CV is attached automatically when you apply.</p>
+        <a class="btn" asp-controller="Cv" asp-action="Builder">Create CV</a>
+    </div>
+}
+else
+{
+    <div class="row" style="margin-bottom:10px">
+        <a class="btn" asp-controller="Cv" asp-action="Builder">Edit CV</a>
+        <button class="btn alt" type="button" data-pdf="#cvp" data-name="@(string.IsNullOrWhiteSpace(Model.Name) ? "cv" : Model.Name)">Download PDF</button>
+    </div>
+    <div class="pv"><div id="cvp"><partial name="_CvView" model="Model" /></div></div>
+}

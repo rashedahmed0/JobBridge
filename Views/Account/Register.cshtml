@@ -1,0 +1,52 @@
+@model RegisterVm
+@{ ViewData["Title"] = "Register"; }
+
+<div class="card" style="max-width:460px;margin:20px auto">
+    <h2>Create account</h2>
+    <div class="tabs">
+        @foreach (var (key, label) in new[] { ("JobSeeker", "Job Seeker"), ("Recruiter", "Recruiter") })
+        {
+            <a class="tabbtn @(Model.Role == key ? "on" : "")" asp-action="Register" asp-route-role="@key">@label</a>
+        }
+    </div>
+
+    <form asp-action="Register" method="post">
+        <input type="hidden" asp-for="Role" />
+        <input type="hidden" asp-for="GuestCv" id="guestCv" />
+        <div asp-validation-summary="ModelOnly" class="err"></div>
+
+        <label asp-for="Name"></label>
+        <input asp-for="Name" />
+        <span asp-validation-for="Name" class="err"></span>
+
+        @if (Model.Role == "Recruiter")
+        {
+            <label asp-for="Company"></label>
+            <input asp-for="Company" />
+            <span asp-validation-for="Company" class="err"></span>
+        }
+
+        <label asp-for="Email">Email</label>
+        <input asp-for="Email" autocomplete="username" />
+        <span asp-validation-for="Email" class="err"></span>
+
+        <label asp-for="Password">Password</label>
+        <input asp-for="Password" autocomplete="new-password" />
+        <span asp-validation-for="Password" class="err"></span>
+
+        <br /><br />
+        <button class="btn" type="submit">Register</button>
+        <a asp-action="Login">Have an account?</a>
+    </form>
+</div>
+
+@section Scripts {
+    <script>
+        // Copy the CV built in guest mode into the new account
+        try {
+            const g = localStorage.getItem('jh_guest');
+            const f = document.getElementById('guestCv');
+            if (g && f && !f.value) f.value = g;
+        } catch (e) { }
+    </script>
+}

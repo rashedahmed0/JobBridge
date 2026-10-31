@@ -1,0 +1,44 @@
+@model JobsIndexVm
+@{ ViewData["Title"] = "Jobs"; }
+
+<div class="hero">
+    <h1>আপনার পরের কাজটি এখানেই</h1>
+    <p class="mut">
+        Browse jobs from verified recruiters. No CV yet?
+        <a asp-controller="Cv" asp-action="Builder">Create one free – no login needed.</a>
+    </p>
+</div>
+
+<form method="get" class="card filters">
+    <input name="q" value="@Model.Q" placeholder="Search title, company, skill" />
+    <select name="location" onchange="this.form.submit()">
+        <option value="">All locations</option>
+        @foreach (var l in Model.Locations)
+        {
+            <option value="@l" selected="@(l == Model.Location)">@l</option>
+        }
+    </select>
+    <select name="type" onchange="this.form.submit()">
+        <option value="">All types</option>
+        @foreach (var t in Lookups.JobTypes)
+        {
+            <option value="@t" selected="@(t == Model.Type)">@t</option>
+        }
+    </select>
+    <select name="sort" onchange="this.form.submit()">
+        <option value="new" selected="@(Model.Sort != "az")">Newest</option>
+        <option value="az" selected="@(Model.Sort == "az")">Title A–Z</option>
+    </select>
+    <button class="btn" type="submit">Search</button>
+</form>
+
+<div class="grid">
+    @foreach (var j in Model.Jobs)
+    {
+        <partial name="_JobCard" model="new JobCardVm(j, Model.AppliedJobIds.Contains(j.Id))" />
+    }
+</div>
+@if (Model.Jobs.Count == 0)
+{
+    <p class="mut">No jobs match. Clear a filter to see more.</p>
+}

@@ -1,0 +1,7 @@
+@{ var tab = ViewData["Tab"] as string; }
+<h2>Recruiter dashboard</h2>
+<div class="tabs">
+    <a class="tabbtn @(tab == "jobs" ? "on" : "")" asp-controller="Recruiter" asp-action="Index">My Jobs</a>
+    <a class="tabbtn @(tab == "post" ? "on" : "")" asp-controller="Recruiter" asp-action="Post">Post a Job</a>
+    <a class="tabbtn @(tab == "prof" ? "on" : "")" asp-controller="Recruiter" asp-action="Company">Company Profile</a>
+</div>

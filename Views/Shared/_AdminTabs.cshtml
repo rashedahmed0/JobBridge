@@ -1,0 +1,7 @@
+@{ var tab = ViewData["Tab"] as string; }
+<h2>Admin dashboard</h2>
+<div class="tabs">
+    <a class="tabbtn @(tab == "ov" ? "on" : "")" asp-controller="Admin" asp-action="Index">Overview</a>
+    <a class="tabbtn @(tab == "users" ? "on" : "")" asp-controller="Admin" asp-action="Users">Users</a>
+    <a class="tabbtn @(tab == "jobs" ? "on" : "")" asp-controller="Admin" asp-action="Jobs">Jobs</a>
+</div>

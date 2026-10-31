@@ -1,0 +1,56 @@
+@model CvData
+@{
+    var tpl = Model.Tpl is "modern" or "minimal" ? Model.Tpl : "classic";
+    var contact = new[] { Model.Email, Model.Phone, Model.Address }.Where(s => !string.IsNullOrWhiteSpace(s));
+    var edu = (Model.Edu ?? new()).Where(x => !string.IsNullOrWhiteSpace(x.Deg + x.Inst + x.Cgpa + x.Year)).ToList();
+    var exp = (Model.Exp ?? new()).Where(x => !string.IsNullOrWhiteSpace(x.Role + x.Org + x.Period + x.Desc)).ToList();
+    var proj = (Model.Proj ?? new()).Where(x => !string.IsNullOrWhiteSpace(x.Title + x.Desc)).ToList();
+    var skills = (Model.Skills ?? "").Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
+}
+<div class="cv t-@tpl">
+    <div class="cvh">
+        <h1>@(string.IsNullOrWhiteSpace(Model.Name) ? "Your Name" : Model.Name)</h1>
+        <p>@string.Join(" | ", contact)</p>
+    </div>
+
+    @if (!string.IsNullOrWhiteSpace(Model.Obj))
+    {
+        <h2>Career Objective</h2>
+        <p>@Model.Obj</p>
+    }
+    @if (edu.Count > 0)
+    {
+        <h2>Education</h2>
+        foreach (var x in edu)
+        {
+            <div class="it">
+                <b>@x.Deg</b>
+                <p>@x.Inst @(string.IsNullOrWhiteSpace(x.Cgpa) ? "" : "· CGPA/GPA: " + x.Cgpa) @(string.IsNullOrWhiteSpace(x.Year) ? "" : "(" + x.Year + ")")</p>
+            </div>
+        }
+    }
+    @if (exp.Count > 0)
+    {
+        <h2>Experience</h2>
+        foreach (var x in exp)
+        {
+            <div class="it">
+                <b>@x.Role</b> – @x.Org <i>@x.Period</i>
+                <p>@x.Desc</p>
+            </div>
+        }
+    }
+    @if (skills.Length > 0)
+    {
+        <h2>Skills</h2>
+        <div class="sk">@foreach (var s in skills.Where(k => k.Length > 0)) { <span>@s</span> }</div>
+    }
+    @if (proj.Count > 0)
+    {
+        <h2>Projects</h2>
+        foreach (var x in proj)
+        {
+            <div class="it"><b>@x.Title</b><p>@x.Desc</p></div>
+        }
+    }
+</div>

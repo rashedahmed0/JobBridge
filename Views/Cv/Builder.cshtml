@@ -1,0 +1,29 @@
+@model CvBuilderVm
+@{ ViewData["Title"] = "CV Maker"; }
+
+<h2>CV Maker @if (Model.Guest) { <span class="tag">Guest mode – no login needed</span> }</h2>
+
+<div class="two" id="cv-app" data-mode="@(Model.Guest ? "guest" : "user")" data-save-url="@Url.Action("Save", "Cv")">
+    <div class="card" id="cvf"></div>
+    <div>
+        <div class="row" style="margin-bottom:10px">
+            <button class="btn" type="button" id="cv-save">@(Model.Guest ? "Save in this browser" : "Save CV")</button>
+            <button class="btn alt" type="button" id="cv-pdf">Download PDF</button>
+            <button class="btn alt" type="button" id="cv-print">Print</button>
+        </div>
+        <div class="pv"><div id="cvp"></div></div>
+        @if (Model.Guest)
+        {
+            <p class="mut">
+                Want to apply? <a asp-controller="Account" asp-action="Register">Register</a>
+                – your CV is copied to your new account.
+            </p>
+        }
+    </div>
+</div>
+
+<script type="application/json" id="cv-init">@Json.Serialize(Model.Initial)</script>
+
+@section Scripts {
+    <script src="~/js/cv.js" asp-append-version="true"></script>
+}

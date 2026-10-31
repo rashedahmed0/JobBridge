@@ -1,0 +1,7 @@
+@{ var tab = ViewData["Tab"] as string; }
+<h2>Hello, @(User.Identity?.Name)</h2>
+<div class="tabs">
+    <a class="tabbtn @(tab == "prof" ? "on" : "")" asp-controller="Seeker" asp-action="Index">My Profile</a>
+    <a class="tabbtn @(tab == "cv" ? "on" : "")" asp-controller="Seeker" asp-action="Cv">My CV</a>
+    <a class="tabbtn @(tab == "apps" ? "on" : "")" asp-controller="Seeker" asp-action="Applications">My Applications</a>
+</div>

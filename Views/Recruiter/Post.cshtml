@@ -1,0 +1,43 @@
+@model JobFormVm
+@{
+    ViewData["Title"] = Model.Id == null ? "Post a Job" : "Edit job";
+    ViewData["Tab"] = "post";
+}
+<partial name="_RecruiterTabs" />
+
+<div class="card" style="max-width:600px">
+    <h3>@(Model.Id == null ? "New job" : "Edit job")</h3>
+    <form asp-action="Post" method="post">
+        <input type="hidden" asp-for="Id" />
+        <div asp-validation-summary="ModelOnly" class="err"></div>
+
+        <label asp-for="Title"></label>
+        <input asp-for="Title" />
+        <span asp-validation-for="Title" class="err"></span>
+
+        <label asp-for="Location"></label>
+        <input asp-for="Location" />
+        <span asp-validation-for="Location" class="err"></span>
+
+        <label asp-for="Type"></label>
+        <select asp-for="Type" asp-items="@(new SelectList(Lookups.JobTypes))"></select>
+
+        <label asp-for="Category"></label>
+        <input asp-for="Category" />
+        <span asp-validation-for="Category" class="err"></span>
+
+        <label asp-for="Salary"></label>
+        <input asp-for="Salary" />
+        <span asp-validation-for="Salary" class="err"></span>
+
+        <label asp-for="Description"></label>
+        <textarea asp-for="Description"></textarea>
+        <span asp-validation-for="Description" class="err"></span>
+
+        <label asp-for="Requirements"></label>
+        <textarea asp-for="Requirements"></textarea>
+
+        <br />
+        <button class="btn" type="submit">@(Model.Id == null ? "Publish job" : "Save changes")</button>
+    </form>
+</div>

@@ -1,0 +1,40 @@
+@model JobDetailsVm
+@{
+    var j = Model.Job;
+    ViewData["Title"] = j.Title;
+}
+
+<div class="card">
+    <h2>@j.Title @if (!j.IsOpen) { <span class="tag">Closed</span> }</h2>
+    <p><b>@j.Company</b> · @j.Location · @j.Type</p>
+    <p><b>Salary:</b> @j.Salary · <b>Category:</b> @j.Category</p>
+    <p class="mut">Posted @j.PostedDate.ToString("yyyy-MM-dd")</p>
+
+    <h3>Description</h3>
+    <p style="white-space:pre-line">@j.Description</p>
+
+    @if (!string.IsNullOrWhiteSpace(j.Requirements))
+    {
+        <h3>Requirements</h3>
+        <p style="white-space:pre-line">@j.Requirements</p>
+    }
+
+    <div class="row" style="margin-top:14px">
+        <partial name="_ApplyButton" model="new JobCardVm(j, Model.Applied)" />
+        <a class="btn alt sm" asp-action="Index">← Back to jobs</a>
+    </div>
+</div>
+
+@if (User.Identity?.IsAuthenticated != true && j.IsOpen)
+{
+    <div class="card">
+        <h3>Apply for this job</h3>
+        <p>Log in to submit your application with a saved CV. No account yet? Build your CV first without logging in.</p>
+        <div class="row">
+            <a class="btn" asp-controller="Account" asp-action="Login"
+               asp-route-returnUrl="@Url.Action("Details", "Jobs", new { id = j.Id })">Login</a>
+            <a class="btn alt" asp-controller="Account" asp-action="Register">Register</a>
+            <a class="btn alt" asp-controller="Cv" asp-action="Builder">Create Your CV (no login)</a>
+        </div>
+    </div>
+}

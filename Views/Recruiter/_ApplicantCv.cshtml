@@ -1,0 +1,9 @@
+@model ApplicantCvVm
+@{ var s = Model.Applicant; }
+<h2>@s.Name</h2>
+<p>
+    @s.Headline @(string.IsNullOrWhiteSpace(s.Headline) || string.IsNullOrWhiteSpace(s.Location) ? "" : "·") @s.Location<br />
+    @s.Email @(string.IsNullOrWhiteSpace(s.Phone) ? "" : "· " + s.Phone)
+</p>
+<button class="btn alt sm" type="button" data-pdf="#mcv" data-name="@s.Name">Download CV PDF</button>
+<div class="pv" style="margin-top:10px"><div id="mcv"><partial name="_CvView" model="Model.Cv" /></div></div>

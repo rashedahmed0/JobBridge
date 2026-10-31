@@ -1,0 +1,30 @@
+@model ProfileVm
+@{
+    ViewData["Title"] = "My Profile";
+    ViewData["Tab"] = "prof";
+}
+<partial name="_SeekerTabs" />
+
+<div class="card" style="max-width:520px">
+    <form asp-action="Index" method="post">
+        <div asp-validation-summary="ModelOnly" class="err"></div>
+        <label asp-for="Name"></label>
+        <input asp-for="Name" />
+        <span asp-validation-for="Name" class="err"></span>
+
+        <label asp-for="Phone"></label>
+        <input asp-for="Phone" />
+
+        <label asp-for="Location"></label>
+        <input asp-for="Location" />
+
+        <label asp-for="Headline"></label>
+        <input asp-for="Headline" />
+
+        <label>Email</label>
+        <input value="@Model.Email" disabled />
+
+        <br /><br />
+        <button class="btn" type="submit">Save profile</button>
+    </form>
+</div>

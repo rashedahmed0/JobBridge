@@ -1,0 +1,56 @@
+@model List<AppUser>
+@{
+    ViewData["Title"] = "Users";
+    ViewData["Tab"] = "users";
+}
+<partial name="_AdminTabs" />
+
+<div class="card gw">
+    <table class="gt" id="gu">
+        <thead>
+            <tr>
+                <th data-sort="0">Name<span class="ind"></span></th>
+                <th data-sort="1">Email<span class="ind"></span></th>
+                <th data-sort="2">Role<span class="ind"></span></th>
+                <th>Action</th>
+            </tr>
+            <tr class="fr">
+                <th><input data-col="0" placeholder="Filter…" /></th>
+                <th><input data-col="1" placeholder="Filter…" /></th>
+                <th>
+                    <select data-col="2">
+                        <option value="">All</option>
+                        @foreach (var r in Model.Select(u => u.Role.ToString()).Distinct())
+                        {
+                            <option>@r</option>
+                        }
+                    </select>
+                </th>
+                <th></th>
+            </tr>
+        </thead>
+        <tbody>
+        @foreach (var u in Model)
+        {
+            <tr>
+                <td>@u.Name</td>
+                <td>@u.Email</td>
+                <td>@u.Role</td>
+                <td>
+                    @if (u.Role != UserRole.Admin)
+                    {
+                        <form asp-action="DeleteUser" asp-route-id="@u.Id" method="post" class="inl"
+                              data-confirm="Delete this user and all their data?">
+                            <button class="btn bad sm" type="submit">Delete</button>
+                        </form>
+                    }
+                </td>
+            </tr>
+        }
+        </tbody>
+    </table>
+    <div class="row sp mut" style="padding:8px 12px">
+        <span data-count-for="gu"></span>
+        <button class="btn alt sm" type="button" data-clear-for="gu">Clear filters</button>
+    </div>
+</div>
