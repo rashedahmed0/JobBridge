@@ -7,7 +7,7 @@ using Microsoft.EntityFrameworkCore;
 
 namespace KormoKhoj.Controllers;
 
-[Authorize(Roles = "Applicant")]
+[Authorize(Roles = "JobSeeker")]    
 public class MyInterviewsController : Controller
 {
     private readonly AppDbContext _db;

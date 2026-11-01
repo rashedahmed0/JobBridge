@@ -1,0 +1,49 @@
+@using KormoKhoj.Models
+@using KormoKhoj.ViewModels
+@model List<MyInterviewRow>
+@{
+    ViewData["Title"] = "My Interviews";
+}
+
+<h2>My Interviews</h2>
+
+@if (Model.Count == 0)
+{
+    <div class="card">Ekhono kono interview schedule hoy nai.</div>
+}
+@foreach (var r in Model)
+{
+    var iv = r.Interview;
+    var now = DateTime.Now;
+    var canJoin = now >= iv.ScheduledAt.AddMinutes(-15)
+               && now <= iv.ScheduledAt.AddHours(3)
+               && iv.Result == InterviewResult.Pending;
+    <div class="card">
+        <h3>
+            @r.JobTitle <span class="mut">· @r.Company</span>
+            <span class="tag">@iv.Result</span>
+        </h3>
+        <p><b>@iv.ScheduledAt.ToString("dddd, dd MMM yyyy, hh:mm tt")</b></p>
+        @if (!string.IsNullOrWhiteSpace(iv.Note))
+        {
+            <p class="mut">@iv.Note</p>
+        }
+
+        @if (canJoin)
+        {
+            <a class="btn" href="@iv.MeetLink" target="_blank" rel="noopener noreferrer">Join Interview (Google Meet)</a>
+        }
+        else if (iv.Result == InterviewResult.Pending)
+        {
+            <button class="btn alt" disabled>Interview shuru er 15 min age Join active hobe</button>
+        }
+
+        @if (iv.Result != InterviewResult.Pending)
+        {
+            <div class="card">
+                <b>Result: @iv.Result</b>
+                <p>@iv.Feedback</p>
+            </div>
+        }
+    </div>
+}
