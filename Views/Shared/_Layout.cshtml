@@ -11,7 +11,8 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
     <meta name="csrf" content="@token" />
-    <title>@ViewData["Title"] – কর্মখোঁজ</title>
+    <title>@ViewData["Title"] – JobBride</title>
+    @* <title>@ViewData["Title"] – কর্মখোঁজ</title> *@
     <link href="https://fonts.googleapis.com/css2?family=Hind+Siliguri:wght@400;500;600;700&display=swap" rel="stylesheet" />
     <link rel="stylesheet" href="~/css/site.css" asp-append-version="true" />
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
@@ -19,7 +20,7 @@
 <body>
     <header>
         <div class="nav">
-            <a class="logo" asp-controller="Jobs" asp-action="Index">কর্মখোঁজ</a>
+            <a class="logo" asp-controller="Jobs" asp-action="Index">JobBride</a>
             <a asp-controller="Jobs" asp-action="Index">Jobs</a>
             <a asp-controller="Cv" asp-action="Builder">CV Maker</a>
             @if (signedIn)

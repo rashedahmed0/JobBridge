@@ -207,7 +207,7 @@ public class RecruiterController : Controller
                 Email = !string.IsNullOrWhiteSpace(a.Applicant.Email) ? a.Applicant.Email : cv.Email,
                 Address = !string.IsNullOrWhiteSpace(cv.Address) ? cv.Address : a.Applicant.Location,
                 Education = edu.Deg,
-                Department = !string.IsNullOrWhiteSpace(dept) ? dept : edu.Dept, // table value age, na thakle snapshot
+                Department = !string.IsNullOrWhiteSpace(dept) ? dept : edu.Dept, 
                 Cgpa = edu.Cgpa,
                 Year = edu.Year,
                 Skills = cv.Skills,
@@ -292,9 +292,9 @@ public class RecruiterController : Controller
         if (a == null) return NotFound();
 
         if (!Uri.TryCreate(vm.MeetLink?.Trim(), UriKind.Absolute, out var uri) || uri.Scheme != Uri.UriSchemeHttps)
-            ModelState.AddModelError(nameof(vm.MeetLink), "https:// diye shuru hoa valid link dien.");
+            ModelState.AddModelError(nameof(vm.MeetLink), "Please enter a valid URL starting with https://.");
         if (vm.ScheduledAt != null && vm.ScheduledAt < DateTime.Now && a.Interview == null)
-            ModelState.AddModelError(nameof(vm.ScheduledAt), "Future er somoy dien.");
+            ModelState.AddModelError(nameof(vm.ScheduledAt), "Please select a future date and time.");
         if (!ModelState.IsValid) return View(vm);
 
         if (a.Interview == null)
@@ -307,7 +307,7 @@ public class RecruiterController : Controller
         a.Interview.Note = (vm.Note ?? "").Trim();
 
         await _db.SaveChangesAsync();
-        TempData["Msg"] = "Interview scheduled. Applicant dekhte parbe.";
+        TempData["Msg"] = "Interview scheduled successfully. The applicant can now view the interview details.";
         return RedirectToAction(nameof(Interviews));
     }
 
@@ -320,14 +320,14 @@ public class RecruiterController : Controller
 
         if (!ModelState.IsValid)
         {
-            TempData["Msg"] = "Feedback likhte hobe.";
+            TempData["Msg"] = "\tFeedback is required.";
             return RedirectToAction(nameof(Interviews));
         }
 
         iv.Result = vm.Result;
         iv.Feedback = vm.Feedback.Trim();
         await _db.SaveChangesAsync();
-        TempData["Msg"] = "Result o feedback save hoyeche.";
+        TempData["Msg"] = "Result and feedback saved successfully.";
         return RedirectToAction(nameof(Interviews));
     }
 
@@ -339,7 +339,7 @@ public class RecruiterController : Controller
         if (iv == null) return NotFound();
         _db.Interviews.Remove(iv);
         await _db.SaveChangesAsync();
-        TempData["Msg"] = "Interview cancel kora hoyeche.";
+        TempData["Msg"] = "	Interview cancelled successfully.";
         return RedirectToAction(nameof(Interviews));
     }
 }
